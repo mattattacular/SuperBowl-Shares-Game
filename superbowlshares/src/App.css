@@ -1,0 +1,189 @@
+.App {
+  text-align: center;
+  padding: 20px;
+}
+
+/* Borders and text alignment for table headers and data */
+th, td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: center;
+}
+
+/* Background color for headers only */
+th {
+  background-color: #f4f4f4;
+}
+
+/* Sticky header for vertical scrolling */
+table thead th {
+  padding: 3px;
+  position: sticky;
+  top: 0;
+  z-index: 3;
+}
+
+/* Add a thick border to the first column and make it sticky for horizontal scrolling*/
+th:first-child, td:first-child {
+  border-left: 2px solid #000;
+  border-right: 2px solid #000;
+  border-top: 2px solid #000;
+  border-bottom: 2px solid #000;
+  background-color: #f4f4f4;
+  width: 120px;
+  position: sticky;
+  top: 0;
+  left: 0;
+  z-index: 2;
+}
+
+/* Add a thick border to the second column, but not as thick */
+th:nth-child(2), td:nth-child(2) {
+  border-left: 1px solid #000;
+  border-right: 1px solid #000;
+  border-top: 1px solid #000;
+  border-bottom: 1px solid #000;
+  width: 120px;
+}
+
+/* overflow: visible and border-collapse: separate have been only things to work correctly */
+table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  overflow: visible;
+  table-layout: fixed;
+}
+
+.table-container {
+  position: relative;
+}
+
+.table-wrapper {
+  position: relative;
+}
+
+/* stick the header of the table to the top*/
+table thead th:first-child {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+}
+
+/* Stick the column to the left */
+table tbody th {
+  position: sticky;
+  left: 0;
+  background: white;
+  z-index: 3;
+}
+
+/* Color background of cells with 'Yes' */
+.yes-cell {
+  background-color: green;
+  color: white; /* Optional: to ensure the text is readable */
+  display: inline;
+  padding-right: 40%;
+  padding-top: 1%;
+  padding-bottom: 1%;
+  padding-left: 40%;  
+}
+
+/* Style for the delete button */
+.delete-button {
+  background-color: #f44336;
+  color: white;
+  border: 1px solid black;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+.delete-button:hover {
+  border: 2px solid black;
+  background-color: #720a02;
+}
+
+/* Styles for the active tab */
+.tab-button {
+  padding: 10px 20px;
+  margin: 5px;
+  border: 1px solid black;
+  background-color: #38761d;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.tab-button:hover {
+  border: 2px solid black;
+  background-color: #1d5604;
+}
+
+.tab-button.active {
+  background-color: #007bff;
+  color: white;
+  border: 5px solid #007bff;
+}
+
+
+label {
+  display: block;
+  margin: 5px 0;
+}
+
+form input,
+form button {
+  padding: 10px;
+  border: 1px solid #ccc;  /* Default border for input and button */
+  margin-right: 5px;
+}
+
+form button {
+  background-color: #007bff;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+form button:hover {
+  background-color: #0056b3;
+}
+
+/* .App-logo {
+  height: 40vmin;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .App-logo {
+    animation: App-logo-spin infinite 20s linear;
+  }
+} */
+
+#left { text-align:left; }
+
+.App-header {
+  background-color: #282c34;
+  min-height: 10vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+  position: sticky;
+  left: 0;
+}
+
+.App-link {
+  color: #61dafb;
+}
+
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

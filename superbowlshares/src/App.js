@@ -1,0 +1,782 @@
+//import logo from './logo.svg';
+import React, { useState, useEffect } from 'react';
+import { useTable } from 'react-table';
+import './App.css';
+import nflTeams from './nflTeams';
+
+// Keep this commented other than for starting from scratch
+//localStorage.clear();
+
+// Function/application that contains everything
+const App = () => {
+  
+  // Load payoutData from localStorage, or initialize if not present
+  const loadPayoutData = () => {
+    const storedPayoutData = localStorage.getItem('payoutData');
+    return storedPayoutData ? JSON.parse(storedPayoutData) : getDefaultTableData;
+  };
+
+  // Load ledgerData from localStorage, or initialize if not present
+  const loadLedgerData = () => {
+    const storedLedgerData = localStorage.getItem('ledgerData');
+    return storedLedgerData ? JSON.parse(storedLedgerData) : getDefaultLedgerData();
+  };
+
+  // Default table data for NFL teams
+  const getDefaultTableData = () => [];
+
+  // Default ledger data
+  const getDefaultLedgerData = () => [
+    {
+      shareHolder: '',
+      teamName: '',
+      numberOfShares: '',
+      weekCostPerShare: '',
+      firstWeekRequirement: '',
+      week5Requirement: '',
+      week10Requirement: '',
+      week15Requirement: '',
+    },
+  ];
+
+  // Define useStates
+  const [activeTab, setActiveTab] = useState('sharesTable'); // State to manage active tab
+  const [data, setData] = useState([]); // This is for the shares table specifically, don't get confused by "data"
+  const [moneyData, setMoneyData] = useState([]);
+  const [totalMoney, setTotalMoney] = useState(0); // State for the total sum of money
+  const [payoutData, setPayoutData] = useState(loadPayoutData);
+  const [weeklySharesData, setWeeklySharesData] = useState([]);
+  const [requirementsData, setRequirementsData] = useState([]);
+  const [ledgerData, setLedgerData] = useState(loadLedgerData); // State for the ledger table
+  const [newLedgerRow, setNewLedgerRow] = useState({
+    shareHolder: '',
+    teamName: '',
+    numberOfShares:'',
+    weekCostPerShare: '',
+    firstWeekRequirement: false,
+    week5Requirement: false,
+    week10Requirement: false,
+    week15Requirement: false,
+  });
+
+  // Effect to store sharesData in localStorage
+  useEffect(() => {
+    localStorage.setItem('sharesData', JSON.stringify(data));
+  }, [data]);
+
+  // Effect to store moneyData in localStorage
+  useEffect(() => {
+    localStorage.setItem('moneyData', JSON.stringify(moneyData));
+  }, [moneyData]);
+
+  // Effect to store payoutData in localStorage
+  useEffect(() => {
+    localStorage.setItem('payoutData', JSON.stringify(payoutData));
+  }, [payoutData]);
+  
+  useEffect(() => {
+	  localStorage.setItem('weeklySharesData', JSON.stringify(weeklySharesData));
+  }, [weeklySharesData]);
+  
+  // Effect to store payoutData in localStorage
+  useEffect(() => {
+    localStorage.setItem('requirementsData', JSON.stringify(requirementsData));
+  }, [requirementsData]);
+
+  // Effect to store ledgerData in localStorage and reaggregate the ledger to populate other tabs
+  useEffect(() => {
+    localStorage.setItem('ledgerData', JSON.stringify(ledgerData));
+    const aggregatedData = aggregateLedgerData(ledgerData);
+    setData(aggregatedData.sharesData);
+    setMoneyData(aggregatedData.moneyData);
+    setTotalMoney(calculateTotalMoney(aggregatedData.moneyData));
+	setPayoutData(aggregatedData.payoutData);
+	setRequirementsData(aggregatedData.requirementsData);
+	setWeeklySharesData(aggregatedData.weeklySharesData);
+  }, [ledgerData]);
+
+  // Handles deleting a row from the table
+  const handleDeleteRow = (index) => {
+    setData((prevData) => {
+      const newData = [...prevData];
+      newData.splice(index, 1); // Remove the row at the specified index
+      return newData.map((row, i) => ({ ...row, index: i })); // Update indices
+    });
+  };
+
+  // Handles deleting a row from the moneyTable
+  const handleMoneyDeleteRow = (index) => {
+    setMoneyData((prevData) => {
+      const newData = [...prevData];
+      newData.splice(index, 1); // Remove the row at the specified index
+      return newData.map((row, i) => ({ ...row, index: i })); // Update indices
+    });
+  };
+
+  // Handles deleting a row from the payoutTable
+  const handlePayoutDeleteRow = (index) => {
+    setPayoutData((prevData) => {
+      const newData = [...prevData];
+      newData.splice(index, 1); // Remove the row at the specified index
+      return newData.map((row, i) => ({ ...row, index: i })); // Update indices
+    });
+  };
+
+  // Handles deleting a row from the requirementsTable
+  const handleRequirementsDeleteRow = (index) => {
+    setRequirementsData((prevData) => {
+      const newData = [...prevData];
+      newData.splice(index, 1); // Remove the row at the specified index
+      return newData.map((row, i) => ({ ...row, index: i })); // Update indices
+    });
+  };
+
+  // Handles deleting a row from the requirementsTable
+  const handleWeeklySharesDeleteRow = (index) => {
+    setWeeklySharesData((prevData) => {
+      const newData = [...prevData];
+      newData.splice(index, 1); // Remove the row at the specified index
+      return newData.map((row, i) => ({ ...row, index: i })); // Update indices
+    });
+  };
+
+  // Define the columns of the table based on the NFL teams
+  const columns = React.useMemo(
+    () => [
+      {
+        Header: 'Share Holder',
+        accessor: 'shareHolder', // Accessor for the row header
+      },
+	  {
+		  Header: 'Sum of Shares',
+		  accessor: 'sumShares',
+	  },
+      ...nflTeams.map((team) => ({
+        Header: <img src={team.helmet} alt={team.name} style={{ width: '50px' }} />,
+        accessor: team.name,
+        Cell: ({ value }) => (value !== undefined ? value : ''),
+      })),
+    ],
+    []
+  );
+
+  // Define the columns of the moneyTable based on the NFL teams
+  const moneyColumns = React.useMemo(
+    () => [
+      {
+        Header: 'Share Holder',
+        accessor: 'shareHolder', // Accessor for the row header
+      },
+	  {
+		  Header: 'Sum of Money',
+		  accessor: 'sumMoney',
+		  Cell: ({ value }) => (value !== undefined ? `$${value}` : ''), // Add dollar sign to the value
+	  },
+      ...nflTeams.map((team) => ({
+        Header: <img src={team.helmet} alt={team.name} style={{ width: '50px' }} />,
+        accessor: team.name,
+        Cell: ({ value }) => (value !== undefined ? `$${value}` : ''), // Add dollar sign to the value
+      })),
+    ],
+    []
+  );
+
+  // Define the columns of the payoutTable based on the NFL teams
+  const payoutColumns = React.useMemo(
+    () => [
+      {
+        Header: 'Share Holder',
+        accessor: 'shareHolder', // Accessor for the row header
+      },
+	  {
+		  Header: 'Max Possible Payout',
+		  accessor: 'maxMoney',
+		  Cell: ({ value }) => (value !== undefined ? `$${value.toFixed(2)}` : ''), // Add dollar sign to the value
+	  },
+      ...nflTeams.map((team) => ({
+        Header: <img src={team.helmet} alt={team.name} style={{ width: '50px' }} />,
+        accessor: team.name,
+        Cell: ({ value }) => (value !== undefined ? `$${value.toFixed(2)}` : ''), // Add dollar sign to the value
+      })),
+    ],
+    []
+  );
+  
+  const weeklySharesColumns = React.useMemo(
+	() => [
+	  {
+		Header: 'Week',
+		accessor: 'week',
+	  },
+	  {
+		  Header: 'Total Shares Per Week',
+		  accessor: 'sumWeek',
+	  },
+      ...nflTeams.map((team) => ({
+        Header: <img src={team.helmet} alt={team.name} style={{ width: '50px' }} />,
+        accessor: team.name,
+        Cell: ({ value }) => (value !== undefined ? value : ''),
+      })),
+    ],
+    []
+  );
+	  
+  
+  // Define the columns of the ledger including an Actions column containing the Delete buttons
+  const requirementsColumns = React.useMemo(
+    () => [
+      {
+        Header: 'Share Holder',
+        accessor: 'shareHolder',
+      },
+      {
+        Header: 'Met First Week Requirement?',
+        accessor: 'firstWeekRequirement',
+        Cell: ({ value }) => (
+		  <span className={value ? 'yes-cell' : ''}>
+			{value ? 'Yes' : 'No'}
+          </span>
+		),
+      },
+      {
+        Header: 'Met Week 5 Requirement?',
+        accessor: 'week5Requirement',
+        Cell: ({ value }) => (
+		  <span className={value ? 'yes-cell' : ''}>
+			{value ? 'Yes' : 'No'}
+          </span>
+		),
+      },
+      {
+        Header: 'Met Week 10 Requirement?',
+        accessor: 'week10Requirement',
+        Cell: ({ value }) => (
+		  <span className={value ? 'yes-cell' : ''}>
+			{value ? 'Yes' : 'No'}
+          </span>
+		),
+      },
+      {
+        Header: 'Met Week 15 Requirement?',
+        accessor: 'week15Requirement',
+        Cell: ({ value }) => (
+		  <span className={value ? 'yes-cell' : ''}>
+			{value ? 'Yes' : 'No'}
+          </span>
+		),
+      },
+    ],
+    []
+  );
+
+  // Define the columns of the ledger including an Actions column containing the Delete buttons
+  const ledgerColumns = React.useMemo(
+    () => [
+      {
+        Header: 'Share Holder',
+        accessor: 'shareHolder',
+      },
+      {
+        Header: 'Team Name',
+        accessor: 'teamName',
+      },
+      {
+        Header: 'Number of Shares',
+        accessor: 'numberOfShares',
+      },
+      {
+        Header: 'Week/Cost per Share',
+        accessor: 'weekCostPerShare',
+      },
+      {
+        Header: 'First Week Requirement?',
+        accessor: 'firstWeekRequirement',
+        Cell: ({ value }) => (value ? 'Yes' : 'No'),
+      },
+      {
+        Header: 'Week 5 Requirement?',
+        accessor: 'week5Requirement',
+        Cell: ({ value }) => (value ? 'Yes' : 'No'),
+      },
+      {
+        Header: 'Week 10 Requirement?',
+        accessor: 'week10Requirement',
+        Cell: ({ value }) => (value ? 'Yes' : 'No'),
+      },
+      {
+        Header: 'Week 15 Requirement?',
+        accessor: 'week15Requirement',
+        Cell: ({ value }) => (value ? 'Yes' : 'No'),
+      },
+	  {
+        Header: 'Actions',
+        accessor: 'actions',
+        Cell: ({ row }) => (
+          <button className="delete-button" onClick={() => handleLedgerDeleteRow(row.index)}>Delete</button>
+        ),
+      },
+    ],
+    []
+  );
+
+  // Function to aggregate ledger data into table data
+  const aggregateLedgerData = (ledgerData) => {
+	const sharesData = [];
+	const moneyData = [];
+	const payoutData = [];
+	const weeklySharesData = Array.from({ length: 18 }, (_, i) => ({ week: `Week ${i + 1}`, sumWeek: 0 }));
+	weeklySharesData.push({week: `Wild Card`, sumWeek: 0}, {week: `Divisional Round`, sumWeek: 0}, {week: `Conference Championships`, sumWeek: 0}, {week: `Superbowl`, sumWeek: 0});
+	const requirementsData = [];
+
+	// Helper function to get the cell object
+	/* const getCell = (team, data) => {
+		return {
+			team: team.name,
+			value: data[team.name] || 0,
+		};
+	}; */
+
+	// Initialize total shares per team
+	const totalSharesPerTeam = nflTeams.reduce((acc, team) => {
+		acc[team.name] = 0;
+		return acc;
+	}, {});
+	
+	totalSharesPerTeam['sumShares'] = 0;
+
+	ledgerData.forEach((row) => {
+		const { shareHolder, teamName, numberOfShares, weekCostPerShare } = row;
+		const team = nflTeams.find((team) => team.name === teamName);
+		
+		if (team) {
+			let sharesRow = sharesData.find((r) => r.shareHolder === shareHolder);
+			let moneyRow = moneyData.find((r) => r.shareHolder === shareHolder);
+			let payoutRow = payoutData.find((r) => r.shareHolder === shareHolder);
+
+			if (!sharesRow) {
+				sharesRow = { shareHolder };
+				sharesData.push(sharesRow);
+			}
+
+			if (!moneyRow) {
+				moneyRow = { shareHolder };
+				moneyData.push(moneyRow);
+			}
+
+			if (!payoutRow) {
+				payoutRow = { shareHolder };
+				payoutData.push(payoutRow);
+			}
+
+			sharesRow[team.name] = (sharesRow[team.name] || 0) + numberOfShares;
+			sharesRow['sumShares'] = (sharesRow['sumShares'] || 0) + numberOfShares;
+			moneyRow[team.name] = (moneyRow[team.name] || 0) + numberOfShares * weekCostPerShare;
+			moneyRow['sumMoney'] = (moneyRow['sumMoney'] || 0) + moneyRow[team.name];
+		
+			// Update total shares per team
+			totalSharesPerTeam[team.name] += numberOfShares;
+			totalSharesPerTeam['sumShares'] = totalSharesPerTeam['sumShares'] += numberOfShares;
+		}
+	});
+
+	// Add Total Shares row
+	const totalSharesRow = {
+		shareHolder: 'Total Shares',
+		...totalSharesPerTeam,
+	};
+
+	sharesData.unshift(totalSharesRow); // Add Total Shares row at the beginning
+	const totalMoney = calculateTotalMoney(moneyData);
+	
+	// Re-loop through ledger rows to calculate payout based on totalMoney and fraction of totalSharesPerTeam
+	ledgerData.forEach((row) => {
+		const { shareHolder, teamName} = row;
+		const team = nflTeams.find((team) => team.name === teamName);
+		
+		if (team) {
+			let sharesRow = sharesData.find((r) => r.shareHolder === shareHolder);
+			let payoutRow = payoutData.find((r) => r.shareHolder === shareHolder);
+
+			// Calculate payoutRow
+			payoutRow[team.name] = calculatePayout(sharesRow[team.name],totalSharesPerTeam[team.name],totalMoney);
+			payoutRow['maxMoney'] = Math.max((payoutRow['maxMoney'] || 0),payoutRow[team.name]);
+		}
+	});
+	
+	// Calculate Weekly Shares per Team and Sum
+	ledgerData.forEach((row) => {
+        const{numberOfShares, teamName, weekCostPerShare} = row;
+		const team = nflTeams.find((team) => team.name === teamName);
+		
+		if (team) {
+			let weekRow = weeklySharesData[weekCostPerShare-1];
+			if (weekCostPerShare === 20){
+				weekRow = weeklySharesData[18];
+			} else if (weekCostPerShare === 40){
+				weekRow = weeklySharesData[19];
+			} else if (weekCostPerShare === 80){
+				weekRow = weeklySharesData[20];
+			} else if (weekCostPerShare === 160){
+				weekRow = weeklySharesData[21];
+			}
+			
+			weekRow['sumWeek'] += numberOfShares;
+			weekRow[team.name] = (weekRow[teamName] || 0) + numberOfShares;
+		}		
+	});
+	
+	// Re-loop through ledger rows to check requirements met
+	const firstWeekSharesCount = [{}];
+	const week5SharesCount = [{}];
+	const week10SharesCount = [{}];
+	const week15SharesCount = [{}];
+	
+	ledgerData.forEach((row) => {
+		const {shareHolder, numberOfShares, firstWeekRequirement, week5Requirement, week10Requirement, week15Requirement} = row;
+		let requirementsRow = requirementsData.find((r) => r.shareHolder === shareHolder);
+			
+		if (!requirementsRow) {
+			requirementsRow = { shareHolder, firstWeekRequirement: false, week5Requirement: false, week10Requirement: false, week15Requirement: false };
+			requirementsData.push(requirementsRow);
+		}
+			
+		if (firstWeekRequirement){
+			firstWeekSharesCount[shareHolder] = (firstWeekSharesCount[shareHolder] || 0) + numberOfShares;
+		}
+		if (firstWeekSharesCount[shareHolder] >= 5) {
+			requirementsRow.firstWeekRequirement = true;
+		}
+			
+		if (week5Requirement){
+			week5SharesCount[shareHolder] = (week5SharesCount[shareHolder] || 0) + numberOfShares;
+		}
+		if (week5SharesCount[shareHolder] >= 5) {
+			requirementsRow.week5Requirement = true;
+		}
+			
+		if (week10Requirement){
+			week10SharesCount[shareHolder] = (week10SharesCount[shareHolder] || 0) + numberOfShares;
+		}
+		if (week10SharesCount[shareHolder] >= 2) {
+			requirementsRow.week10Requirement = true;
+		}
+			
+		if (week15Requirement){
+			week15SharesCount[shareHolder] = (week15SharesCount[shareHolder] || 0) + numberOfShares;
+		}
+		if (week15SharesCount[shareHolder] >= 1) {
+			requirementsRow.week15Requirement = true;
+		}
+	});
+
+	return { sharesData, moneyData, payoutData, weeklySharesData, requirementsData };
+  };
+
+  // Function to calculate payout
+  const calculatePayout = (numberOfShares,totalSharesPerTeam,totalMoney) => {
+    // logic for payout calculation
+    return totalMoney*(numberOfShares/totalSharesPerTeam);
+  };
+
+  // Calculate the total sum of money from moneyData
+  const calculateTotalMoney = (moneyData) => {
+    return moneyData.reduce((total, row) => {
+      return (
+        total +
+        nflTeams.reduce((teamTotal, team) => {
+          return teamTotal + (parseFloat(row[team.name]) || 0);
+        }, 0)
+      );
+    }, 0);
+  };
+
+  // Handles inputs to create new row in the ledger table
+  const handleLedgerInputChange = (event) => {
+    const { name, value, type, checked } = event.target;
+    setNewLedgerRow((prevRow) => ({
+      ...prevRow,
+      [name]: type === 'checkbox' ? checked : value,
+    }));
+  };
+
+  // Handles adding a row to the ledger table
+  const handleLedgerAddRow = (event) => {
+    event.preventDefault();
+    const rowToAdd = { ...newLedgerRow, numberOfShares: parseFloat(newLedgerRow.numberOfShares), weekCostPerShare: parseFloat(newLedgerRow.weekCostPerShare) };
+    setLedgerData((prevData) => [rowToAdd, ...prevData]);
+    setNewLedgerRow({
+      shareHolder: '',
+      teamName: '',
+      numberOfShares: '',
+      weekCostPerShare: '',
+      firstWeekRequirement: false,
+      week5Requirement: false,
+      week10Requirement: false,
+      week15Requirement: false,
+    });
+  };
+
+  // Handles deleting a row from the ledger table
+  const handleLedgerDeleteRow = (index) => {
+    setLedgerData((prevData) => {
+      const newData = [...prevData];
+      newData.splice(index, 1); // Remove the row at the specified index
+      return newData.map((row, i) => ({ ...row, index: i })); // Update indices
+    });
+  };
+
+  // Component that returns a table
+	const Table = ({ columns, data, handleDeleteRow, tableStyle }) => {
+		const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = useTable({
+			columns,
+			data,
+		});
+
+		return (
+			<div className="table-container" style={tableStyle}>
+				<div className="table-wrapper">
+					<table {...getTableProps()}>
+						<thead>
+							{headerGroups.map((headerGroup) => (
+								<tr {...headerGroup.getHeaderGroupProps()}>
+									{headerGroup.headers.map((column, columnIndex) => (
+										<th 
+										  {...column.getHeaderProps()}
+										>
+										  {column.render('Header')}
+										</th>
+									))}	
+								</tr>
+							))}	
+						</thead>
+						<tbody {...getTableBodyProps()}>
+						  {rows.map((row) => {
+							prepareRow(row);
+							return (
+							  <tr {...row.getRowProps()}>
+								{row.cells.map((cell, cellIndex) => (
+									<td 
+									  {...cell.getCellProps()}
+									>
+									  {cell.render('Cell')}
+									</td>
+								))}
+							  </tr>
+							);
+						  })}
+						</tbody>
+					</table>
+				</div>
+			</div>
+		);
+	};
+
+  // Define component
+  return (
+    <div className="App">
+      <header className="App-header">
+        <h1 className="App-title">NFL Shareholder Application</h1>
+      </header>
+      <div>
+        <button className="tab-button" onClick={() => setActiveTab('sharesTable')}>Shares Table</button>
+        <button className="tab-button" onClick={() => setActiveTab('moneyTable')}>Money Table</button>
+        <button className="tab-button" onClick={() => setActiveTab('payoutTable')}>Payout Table</button>
+		<button className="tab-button" onClick={() => setActiveTab('weeklySharesTable')}>Weekly Shares Table</button>
+		<button className="tab-button" onClick={() => setActiveTab('requirementsTable')}>Requirements Table</button>
+        <button className="tab-button" onClick={() => setActiveTab('ledger')}>Ledger</button>
+		<button className="tab-button" onClick={() => setActiveTab('rules')}>Rules</button>
+      </div>
+      {activeTab === 'sharesTable' && (
+        <div>
+          <h2>Shares Table</h2>
+		  <Table columns={columns} data={data} handleDeleteRow={handleDeleteRow} tableStyle={{ width: '2800px' }} />
+		</div>
+      )}
+      {activeTab === 'moneyTable' && (
+        <div>
+          <h2>Money Table</h2>
+          <Table columns={moneyColumns} data={moneyData} handleDeleteRow={handleMoneyDeleteRow} tableStyle={{ width: '2800px' }} />
+          <h3>Total Money: ${totalMoney}</h3> {/* Display the total sum of money */}
+        </div>
+      )}
+      {activeTab === 'payoutTable' && (
+        <div>
+          <h2>Payout Table</h2>
+          <Table columns={payoutColumns} data={payoutData} handleDeleteRow={handlePayoutDeleteRow} tableStyle={{ width: '2800px' }} />
+          <h3>Total Money: ${totalMoney}</h3> {/* Display the total sum of money */}
+        </div>
+      )}
+	  {activeTab === 'weeklySharesTable' && (
+		<div>
+		  <h2>Weekly Shares Table</h2>
+		  <Table id="weeklySharesTable" columns={weeklySharesColumns} data={weeklySharesData} handleDeleteRow={handleWeeklySharesDeleteRow} tableStyle={{ width: '2800px' }} />
+		 </div>
+	  )}
+	  {activeTab === 'requirementsTable' && (
+		<div>
+		  <h2>Requirements Table</h2>
+		  <Table id="requirementsTable" columns={requirementsColumns} data={requirementsData} handleDeleteRow={handleRequirementsDeleteRow} tableStyle={{ width: '100%' }} />
+		</div>
+	  )}
+      {activeTab === 'ledger' && (
+        <div>
+          <h2>Ledger</h2>
+          <form onSubmit={handleLedgerAddRow}>
+            <input
+              type="text"
+              name="shareHolder"
+              value={newLedgerRow.shareHolder}
+              onChange={handleLedgerInputChange}
+              placeholder="Share Holder"
+            />
+            <select
+              name="teamName"
+              value={newLedgerRow.teamName}
+              onChange={handleLedgerInputChange}
+            >
+              <option value="">Select Team</option>
+              {nflTeams.map((team) => (
+                <option key={team.name} value={team.name}>
+                  {team.name}
+                </option>
+              ))}
+            </select>
+            <input
+              type="number"
+              name="numberOfShares"
+              value={newLedgerRow.numberOfShares}
+              onChange={handleLedgerInputChange}
+			  min='1'
+              placeholder="Number of Shares"
+            />
+            <input
+              type="number"
+              name="weekCostPerShare"
+              value={newLedgerRow.weekCostPerShare}
+              onChange={handleLedgerInputChange}
+			  min='1'
+              placeholder="Week/Cost per Share"
+            />
+            <label>
+              First Week Requirement?
+              <input
+                type="checkbox"
+                name="firstWeekRequirement"
+                checked={newLedgerRow.firstWeekRequirement}
+                onChange={handleLedgerInputChange}
+              />
+            </label>
+            <label>
+              Week 5 Requirement?
+              <input
+                type="checkbox"
+                name="week5Requirement"
+                checked={newLedgerRow.week5Requirement}
+                onChange={handleLedgerInputChange}
+              />
+            </label>
+            <label>
+              Week 10 Requirement?
+              <input
+                type="checkbox"
+                name="week10Requirement"
+                checked={newLedgerRow.week10Requirement}
+                onChange={handleLedgerInputChange}
+              />
+            </label>
+            <label>
+              Week 15 Requirement?
+              <input
+                type="checkbox"
+                name="week15Requirement"
+                checked={newLedgerRow.week15Requirement}
+                onChange={handleLedgerInputChange}
+              />
+            </label>
+            <button type="submit">Add Row</button>
+          </form>
+		  <Table columns={ledgerColumns} data={ledgerData} handleDeleteRow={handleLedgerDeleteRow} tableStyle={{ width: '100%' }}/>
+        </div>
+      )}
+	  {activeTab === 'rules' && (
+		<div>
+			<h2>Superbowl Shares Game: Rules</h2>
+			<body>
+				<h4>Goal of the Game</h4>
+				<p id="left">
+					The basic premise of the game is to buy shares in the team you think will win the Superbowl. 
+					At the end of the season, the pot is divided up based on percentage of the total shares owned for that team. 
+					There is NO limit on how many shares you can buy in one team OTHER THAN an overall cap on shares at 30 per participant.
+				</p>
+				<p>
+					Payout = totalMoney*(numberOfShares/totalSharesPerTeam)
+				</p>
+				<h4>Share Prices</h4>
+				<p id="left">
+					Each week the share price increases by $1, such that the cost of a share is always equal to the week of the season (Week 1 = $1/share, Week 2 = $2/share,..., Week 18 = $18/share).
+					The idea is that the more knowledge you have about the teams, the more expensive a share costs.
+					In the playoffs, the share price doubles every week:
+				</p>
+				<ul id="left">
+					<li>Wild Card Round = $20</li>
+					<li>Divisional Round = $40</li>
+					<li>Conference Championships = $80</li>
+					<li>Superbowl = $160</li>
+				</ul>
+				<p id="left">
+					A share in a team must be purchased BEFORE KICKOFF of that team's game to count for that week, otherwise the price increases to the following week price.
+					On bye weeks, a share in a team can be purchased until the final result of Monday Night Football before the price increases.
+				</p>
+				<h4>First Week of Participation Rules</h4>
+				<p id="left">
+					The FIRST week of participation REQUIRES minimum of...
+				</p>
+				<ul id="left">
+					<li>... 5 total shares purchased IF BEFORE Week 5</li>
+					<li>... 4 total shares purchased IF AFTER Week 5</li>
+					<li> No more eligibility if first share is not purchased by Week 15</li>
+				</ul>
+				<h4>Required participation in Weeks 5, 10, and 15</h4>
+				<p id="left">
+					All participants involved by...
+				</p>
+				<ul id="left">
+					<li>... Week 5 MUST buy a minimum of 5 shares that week at $5/share</li>
+					<li>... Week 10 MUST buy a minimum of 2 shares that week at $10/share</li>
+					<li>... Week 15 MUST buy a minimum of 1 share that week at $15/share</li>
+				</ul>
+				<p id="left">
+					Note that the share minimum for first week of buy-ins would be IN ADDITION to these requirements (e.g. someone joining Week 5 MUST buy a minimum of 10 shares at $5/share).
+					This is designed such that the minimum possible buy-in if you begin participation BEFORE Week 5 would be $65 (assumes participation from Week 1), whereas the minimum possible buy-in if you begin participation AFTER Week 5 would be $75 (assumes participation from Week 5).
+					First participation AFTER Week 10 would mean a minimum possible buy-in of $85 (assuming participation from Week 10).
+				</p>
+				<h4>"Flexible Shares"</h4>
+				<p id="left">
+					Given all of these required share purchases and the maximum cap of 30 shares, the number of "flexible shares" will vary depending on when participation begins. 
+					A "flexible share" just implies that these share purchases can be made any week you choose, or not at all. Players joining ...					
+				</p>
+				<ul id="left">
+					<li>... by Week 5 would have 5 of 30 shares used on the first week of participation plus 13 of 30 shares already allotted to specific weeks, leaving 12 flexible shares</li>
+					<li>... after Week 5 but before Week 10 would have 5 of 30 shares used on the first week of participation plus 8 of 30 shares already allotted to specific weeks, leaving 17 flexible shares</li>
+					<li>... after Week 10 would have 5 of 30 shares used on the first week of participation plus 6 of 30 shares already allotted to specific weeks, leaving 19 flexible shares</li>
+				</ul>
+				<h4>Penalties for Missed Requirements</h4>
+				<p id="left">
+					If a participant doesn't place their REQUIRED share purchases in time, they will either...
+				</p>
+				<ul id="left">
+					<li>Forfeit all shares and their money already paid remains in the pot, or...</li>
+					<li>Add the equivalent required amount with NO additional shares acquired IF they want to stay in the game.</li>
+				</ul>
+				<p id="left">
+					BUYER BE WARNED!
+				</p>
+			</body>
+		</div>
+	  )}
+    </div>
+  );
+}
+
+export default App;
+
