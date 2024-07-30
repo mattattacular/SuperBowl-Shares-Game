@@ -30,8 +30,21 @@ const App = () => {
 	
   useEffect(() => {
     const fetchLedgerData = async () => {
-      const result = await axios.get('http://localhost:3001/ledger');
-      setLedgerData(result.data.map((item, index) => ({ ...item, id: result.data.length - 1 - index })));
+      try {
+        const backendUrl = window.location.hostname.includes("ngrok")
+          ? `https://fa2e-108-14-163-166.ngrok-free.app/api/ledger`
+          : 'http://localhost:3001/api/ledger';
+      
+        const result = await axios.get(backendUrl);
+        console.log('API response:', result.data); // Log the response to see its structure
+        if (Array.isArray(result.data)) {
+          setLedgerData(result.data.map((item, index) => ({ ...item, id: result.data.length - 1 - index })));
+        } else {
+          console.error('Expected an array but got:', result.data);
+        }
+      } catch (error) {
+        console.error('Error fetching ledger data:', error);
+      }
     };
 
     fetchLedgerData();
@@ -479,7 +492,7 @@ const App = () => {
   const handleLedgerAddRow = async () => {
     //event.preventDefault();
     //const rowToAdd = { ...newLedgerRow, numberOfShares: parseFloat(newLedgerRow.numberOfShares), weekCostPerShare: parseFloat(newLedgerRow.weekCostPerShare) };
-    const rowToAdd = await axios.post('http://localhost:3001/ledger', newLedgerRow);
+    const rowToAdd = await axios.post('http://localhost:3001/api/ledger', newLedgerRow);
 	setLedgerData((prevData) => [{ ...rowToAdd.data, id: 0 }, ...prevData.map((item, index) => ({ ...item, id: index + 1 }))]);
     setNewLedgerRow({
       shareHolder: '',
@@ -504,7 +517,7 @@ const App = () => {
   const handleLedgerDeleteRow = async (index) => {
     try {
 	  const idToDelete = ledgerData[index].id;
-      await axios.delete(`http://localhost:3001/ledger/${idToDelete}`);
+      await axios.delete(`http://localhost:3001/api/ledger/${idToDelete}`);
       setLedgerData((prevData) => {
         const newData = prevData.filter((item) => item.id !== idToDelete);
         return newData.map((item, index) => ({ ...item, id: newData.length - 1 - index }));

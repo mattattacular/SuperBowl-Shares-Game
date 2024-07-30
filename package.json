@@ -1,5 +1,8 @@
 {
   "devDependencies": {
     "gh-pages": "^6.1.1"
+  },
+  "dependencies": {
+    "espn-fantasy-football-api": "^2.0.0"
   }
 }
