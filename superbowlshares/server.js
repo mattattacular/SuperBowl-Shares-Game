@@ -4,6 +4,8 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const path = require('path');
 const sqlite3 = require('sqlite3').verbose();
+const fs = require('fs');
+const https = require('https');
 
 const app = express();
 const port = 3001;
@@ -16,9 +18,14 @@ const port = 3001;
   optionsSuccessStatus: 204
 }; */
 
+// SSL Certificate
+const privateKey = fs.readFileSync('react-key.pem', 'utf8');
+const certificate = fs.readFileSync('react-cert.pem', 'utf8');
+const credentials = { key: privateKey, cert: certificate };
+
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:3000', 'https://major-bird-wired.ngrok-free.app']
+  origin: ['https://localhost:3000', 'https://major-bird-wired.ngrok-free.app']
 }));
 app.use(express.json());
 //app.use(bodyParser.urlencoded({ extended: false }));
@@ -107,7 +114,7 @@ app.delete('/api/ledger/:id', (req, res) => {
   });
 });
 
-// Start server
-app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
+const httpsServer = https.createServer(credentials, app);
+	httpsServer.listen(port, '0.0.0.0', () => {
+	console.log(`Server is running on https://0.0.0.0:${port}`);
 });

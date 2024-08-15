@@ -32,8 +32,8 @@ const App = () => {
     const fetchLedgerData = async () => {
       try {
         const backendUrl = window.location.hostname.includes("ngrok")
-          ? `https://fa2e-108-14-163-166.ngrok-free.app/api/ledger`
-          : 'http://localhost:3001/api/ledger';
+          ? 'https://192.168.68.104:3001/api/ledger'
+          : 'https://localhost:3001/api/ledger';
       
         const result = await axios.get(backendUrl);
         console.log('API response:', result.data); // Log the response to see its structure
@@ -492,7 +492,7 @@ const App = () => {
   const handleLedgerAddRow = async () => {
     //event.preventDefault();
     //const rowToAdd = { ...newLedgerRow, numberOfShares: parseFloat(newLedgerRow.numberOfShares), weekCostPerShare: parseFloat(newLedgerRow.weekCostPerShare) };
-    const rowToAdd = await axios.post('http://localhost:3001/api/ledger', newLedgerRow);
+    const rowToAdd = await axios.post('https://localhost:3001/api/ledger', newLedgerRow);
 	setLedgerData((prevData) => [{ ...rowToAdd.data, id: 0 }, ...prevData.map((item, index) => ({ ...item, id: index + 1 }))]);
     setNewLedgerRow({
       shareHolder: '',
@@ -517,7 +517,7 @@ const App = () => {
   const handleLedgerDeleteRow = async (index) => {
     try {
 	  const idToDelete = ledgerData[index].id;
-      await axios.delete(`http://localhost:3001/api/ledger/${idToDelete}`);
+      await axios.delete(`https://localhost:3001/api/ledger/${idToDelete}`);
       setLedgerData((prevData) => {
         const newData = prevData.filter((item) => item.id !== idToDelete);
         return newData.map((item, index) => ({ ...item, id: newData.length - 1 - index }));
@@ -744,7 +744,7 @@ const App = () => {
 					The FIRST week of participation REQUIRES minimum of...
 				</p>
 				<ul id="left">
-					<li>... 5 total shares purchased IF BEFORE Week 5</li>
+					<li>... 5 total shares purchased IF BEFORE or AT Week 5</li>
 					<li>... 4 total shares purchased IF AFTER Week 5</li>
 					<li> No more eligibility if first share is not purchased by Week 15</li>
 				</ul>
@@ -759,8 +759,8 @@ const App = () => {
 				</ul>
 				<p id="left">
 					Note that the share minimum for first week of buy-ins would be IN ADDITION to these requirements (e.g. someone joining Week 5 MUST buy a minimum of 10 shares at $5/share).
-					This is designed such that the minimum possible buy-in if you begin participation BEFORE Week 5 would be $65 (assumes participation from Week 1), whereas the minimum possible buy-in if you begin participation AFTER Week 5 would be $75 (assumes participation from Week 5).
-					First participation AFTER Week 10 would mean a minimum possible buy-in of $85 (assuming participation from Week 10).
+					This is designed such that the minimum possible buy-in if you begin participation BEFORE Week 5 would be $65 (assumes participation from Week 1), whereas the minimum possible buy-in if you begin participation AFTER Week 5 would be $59 (assumes participation from Week 6).
+					First participation AFTER Week 10 would mean a minimum possible buy-in of $70 (assuming participation from Week 11).
 				</p>
 				<h4>"Flexible Shares"</h4>
 				<p id="left">
@@ -768,9 +768,9 @@ const App = () => {
 					A "flexible share" just implies that these share purchases can be made any week you choose, or not at all. Players joining ...					
 				</p>
 				<ul id="left">
-					<li>... by Week 5 would have 5 of 30 shares used on the first week of participation plus 13 of 30 shares already allotted to specific weeks, leaving 12 flexible shares</li>
-					<li>... after Week 5 but before Week 10 would have 5 of 30 shares used on the first week of participation plus 8 of 30 shares already allotted to specific weeks, leaving 17 flexible shares</li>
-					<li>... after Week 10 would have 5 of 30 shares used on the first week of participation plus 6 of 30 shares already allotted to specific weeks, leaving 19 flexible shares</li>
+					<li>... by Week 5 would have 5 of 30 shares used on the first week of participation plus 8 of 30 shares already allotted to specific weeks, leaving 17 flexible shares</li>
+					<li>... after Week 5 but before Week 10 would have 5 of 30 shares used on the first week of participation plus 3 of 30 shares already allotted to specific weeks, leaving 22 flexible shares</li>
+					<li>... after Week 10 would have 5 of 30 shares used on the first week of participation plus 1 of 30 shares already allotted to specific weeks, leaving 24 flexible shares</li>
 				</ul>
 				<h4>Penalties for Missed Requirements</h4>
 				<p id="left">
