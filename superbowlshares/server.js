@@ -8,7 +8,7 @@ const fs = require('fs');
 const https = require('https');
 
 const app = express();
-const port = 3001;
+const port = process.env.PORT || 3001;
 
 // CORS configuration
 /* const corsOptions = {
