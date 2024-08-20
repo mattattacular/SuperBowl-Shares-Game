@@ -3,13 +3,12 @@ version: "2"
 authtoken: 2jU0Nqc0FEDGDewwHO9icJPXu1Y_oggWBvXCp6RvAD823ZXU
 
 tunnels:
-  frontend-tunnel:
+  frontend:
     proto: http
     addr: 3000
     hostname: major-bird-wired.ngrok-free.app
     crt: react-cert.pem
-    key: react-key.pem
-  
-  backend-tunnel:
+    key: react-key.pem 
+  backend:
     proto: http
     addr: 3001

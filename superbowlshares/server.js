@@ -8,15 +8,10 @@ const fs = require('fs');
 const https = require('https');
 
 const app = express();
-const port = process.env.PORT || 3001;
+const port = 3001;
 
-// CORS configuration
-/* const corsOptions = {
-  origin: ['https://major-bird-wired.ngrok-free.app','https://a8da-108-14-163-166.ngrok-free.app/api/ledger','https://a8da-108-14-163-166.ngrok-free.app'], // Add your ngrok URLs here
-  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-  credentials: true,
-  optionsSuccessStatus: 204
-}; */
+//const sqliteCloudBaseUrl = 'https://dashboard.sqlitecloud.io/projects/cqcumuajiz/databases/tables?databaseName=ledgerDB.sqlite&tableName=ledger';
+//const sqliteCloudApiKey = 'afURoW4EwpznR0iJrf1RYfVLRYhCZAR1J1v4Cb6W8eo'
 
 // SSL Certificate
 const privateKey = fs.readFileSync('react-key.pem', 'utf8');
@@ -28,11 +23,6 @@ app.use(cors({
   origin: ['https://localhost:3000', 'https://major-bird-wired.ngrok-free.app']
 }));
 app.use(express.json());
-//app.use(bodyParser.urlencoded({ extended: false }));
-//app.use(bodyParser.json());
-
-// Serve static files from the React app
-//app.use(express.static(path.join(__dirname, 'build')));
 
 // Connect to SQLite database
 const db = new sqlite3.Database('./ledgerDB.sqlite', (err) => {
