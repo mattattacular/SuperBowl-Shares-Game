@@ -32,7 +32,7 @@ const App = () => {
     const fetchLedgerData = async () => {
       try {
         const backendUrl = window.location.hostname.includes("ngrok")
-          ? 'https://localhost:3001/api/ledger'
+          ? 'https://52.204.175.87:3001/api/ledger'
           : 'https://localhost:3001/api/ledger';
       
         const result = await axios.get(backendUrl);
