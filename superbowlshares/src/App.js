@@ -123,7 +123,7 @@ const App = () => {
     });
   };
 
-  // Handles deleting a row from the requirementsTable
+  // Handles deleting a row from the Weekly Shares Table
   const handleWeeklySharesDeleteRow = (index) => {
     setWeeklySharesData((prevData) => {
       const newData = [...prevData];
@@ -353,7 +353,7 @@ const App = () => {
 			sharesRow[team.name] = (sharesRow[team.name] || 0) + numberOfShares;
 			sharesRow['sumShares'] = (sharesRow['sumShares'] || 0) + numberOfShares;
 			moneyRow[team.name] = (moneyRow[team.name] || 0) + numberOfShares * weekCostPerShare;
-			moneyRow['sumMoney'] = (moneyRow['sumMoney'] || 0) + moneyRow[team.name];
+			moneyRow['sumMoney'] = (moneyRow['sumMoney'] || 0) + numberOfShares * weekCostPerShare;
 		
 			// Update total shares per team
 			totalSharesPerTeam[team.name] += numberOfShares;
